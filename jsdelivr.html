@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/gh/random-coder2/Swaft-Hub@main/public/icon.svg" />
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
+    <title>SwaftHub</title>
+    
+    <!-- Configure your backend server -->
+    <script>
+      // Set your backend server URL here
+      window.BACKEND_URL = 'https://scramjet.swaft.org';
+      
+      // Optional: Pre-configure wisp server
+      window.WISP_URL = 'wss://scramjet.swaft.org/wisp/';
+    </script>
+    
+    <!-- Load from JSDelivr -->
+    <script type="module" src="https://cdn.jsdelivr.net/gh/random-coder2/Swaft-Hub@main/dist/[hash].js"></script>
+    
+    <style>
+      body {
+        background-size: 24px 24px;
+        opacity: 1;
+        margin: 0;
+        font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      #root {
+        min-height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
