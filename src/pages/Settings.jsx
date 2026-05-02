@@ -57,7 +57,6 @@ const baseConfigs = [
       'reset instance',
       'experimental',
       'inspect',
-      'clear cache',
     ],
     key: 'advancedConfig',
   },

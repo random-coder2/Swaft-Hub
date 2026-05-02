@@ -104,9 +104,11 @@ const proxy = (url, type = "application/javascript") => async (req, reply) => {
   }
 };
 
-app.get("/assets/img/*", proxy(req => `https://dogeub-assets.pages.dev/img/${req.params["*"]}`, ""));
-app.get("/assets-fb/*", proxy(req => `https://dogeub-assets.pages.dev/img/server/${req.params["*"]}`, ""));
-app.get("/js/script.js", proxy(() => "https://byod.privatedns.org/js/script.js"));
+const ASSETS_CDN = process.env.ASSETS_CDN || 'https://swafthub-assets.pages.dev';
+app.get("/assets/img/*", proxy(req => `${ASSETS_CDN}/img/${req.params["*"]}`, ""));
+app.get("/assets-fb/*", proxy(req => `${ASSETS_CDN}/img/server/${req.params["*"]}`, ""));
+const STATS_SCRIPT = process.env.STATS_SCRIPT || '';
+app.get("/js/script.js", proxy(() => STATS_SCRIPT || '', 'application/javascript'));
 app.get("/ds", (req, res) => res.redirect("https://discord.gg/ZBef7HnAeg"));
 app.get("/return", async (req, reply) =>
   req.query?.q

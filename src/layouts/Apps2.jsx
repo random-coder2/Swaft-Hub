@@ -1,6 +1,6 @@
 import Nav from '../layouts/Nav';
 import { useState, useMemo, useEffect, useCallback, memo, useRef, lazy, Suspense } from 'react';
-import { Search, LayoutGrid, ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { Search, LayoutGrid, ChevronLeft, ChevronRight, Play, Download, X, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useOptions } from '/src/utils/optionsContext';
 import styles from '../styles/apps.module.css';
@@ -50,7 +50,7 @@ const AppCard = memo(({ app, onClick, fallbackMap, onImgError, itemTheme, itemSt
   );
 });
 
-const CategoryRow = memo(({ category, games, onClick, onViewMore, fallback, onImgError, theme, styles }) => {
+const CategoryRow = memo(({ category, games, onClick, onViewMore, fallback, onImgError, theme, styles, onCache, cachingGames }) => {
   const ref = useRef(null);
 
   const scroll = (dir) => {
@@ -72,6 +72,17 @@ const CategoryRow = memo(({ category, games, onClick, onViewMore, fallback, onIm
             className="text-xs px-3 py-1 rounded-full bg-[#ffffff10] hover:bg-[#ffffff18] transition-colors"
           >
             View more
+          </button>
+          <button
+            onClick={() => onCache && onCache(category, games)}
+            disabled={cachingGames?.[category]}
+            className="text-xs px-3 py-1 rounded-full bg-[#ffffff10] hover:bg-[#ffffff18] transition-colors disabled:opacity-50 flex items-center gap-1"
+          >
+            {cachingGames?.[category] ? (
+              <><Loader2 size={12} className="animate-spin" /> Caching...</>
+            ) : (
+              <><Download size={12} /> Cache Category</>
+            )}
           </button>
         </div>
         <div className="flex gap-2">
@@ -132,6 +143,92 @@ const Games = memo(() => {
   const [dlCount, setDlCount] = useState(0);
   const [showDl, setShowDl] = useState(false);
   const [dlGames, setDlGames] = useState([]);
+  const [cachingGames, setCachingGames] = useState({});
+  const [cacheProgress, setCacheProgress] = useState({ current: 0, total: 0, category: '' });
+  const [showCacheModal, setShowCacheModal] = useState(false);
+
+  const handleCacheCategory = useCallback(async (categoryName, games) => {
+    setCachingGames(prev => ({ ...prev, [categoryName]: true }));
+    setShowCacheModal(true);
+    setCacheProgress({ current: 0, total: games.length, category: categoryName });
+
+    try {
+      const LocalGmLoader = (await import('../utils/localGmLoader')).default;
+      const loader = new LocalGmLoader();
+      await loader.regSW();
+
+      for (let i = 0; i < games.length; i++) {
+        const game = games[i];
+        setCacheProgress({ current: i + 1, total: games.length, category: categoryName });
+
+        try {
+          const firstUrl = Array.isArray(game.url) ? game.url[0] : game.url;
+          if (firstUrl && firstUrl.endsWith('.zip')) {
+            await loader.load(game.url, () => {});
+          }
+        } catch (e) {
+          console.error(`Failed to cache ${game.appName}:`, e);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      const gms = await loader.getAllGms();
+      setDlCount(gms.length);
+      setDlGames(gms);
+    } catch (e) {
+      console.error('Cache category failed:', e);
+    } finally {
+      setCachingGames(prev => ({ ...prev, [categoryName]: false }));
+      setTimeout(() => setShowCacheModal(false), 1000);
+    }
+  }, []);
+
+  const handleCacheAll = useCallback(async () => {
+    const allGames = Object.entries(data);
+    let totalGames = 0;
+    allGames.forEach(([_, games]) => totalGames += games.length);
+
+    setShowCacheModal(true);
+    setCacheProgress({ current: 0, total: totalGames, category: 'All Categories' });
+
+    try {
+      const LocalGmLoader = (await import('../utils/localGmLoader')).default;
+      const loader = new LocalGmLoader();
+      await loader.regSW();
+
+      let processed = 0;
+      for (const [categoryName, games] of allGames) {
+        setCachingGames(prev => ({ ...prev, [categoryName]: true }));
+
+        for (const game of games) {
+          processed++;
+          setCacheProgress({ current: processed, total: totalGames, category: 'All Categories' });
+
+          try {
+            const firstUrl = Array.isArray(game.url) ? game.url[0] : game.url;
+            if (firstUrl && firstUrl.endsWith('.zip')) {
+              await loader.load(game.url, () => {});
+            }
+          } catch (e) {
+            console.error(`Failed to cache ${game.appName}:`, e);
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
+        setCachingGames(prev => ({ ...prev, [categoryName]: false }));
+      }
+
+      const gms = await loader.getAllGms();
+      setDlCount(gms.length);
+      setDlGames(gms);
+    } catch (e) {
+      console.error('Cache all failed:', e);
+    } finally {
+      setTimeout(() => setShowCacheModal(false), 1500);
+    }
+  }, [data]);
 
   useEffect(() => {
     import('../utils/localGmLoader').then(async (m) => {
@@ -218,15 +315,16 @@ const Games = memo(() => {
     setPage(1);
   }, []);
 
+  const scrollCls = useMemo(
+    () => clsx(theme.appsSearchColor, theme[`theme-${options.theme || 'default'}`]),
+    [options.theme],
+  );
+
   const handleImgError = useCallback(
     (name) => setFallback((prev) => ({ ...prev, [name]: true })),
     [],
   );
 
-  const searchCls = useMemo(
-    () => clsx(theme.appsSearchColor, theme[`theme-${options.theme || 'default'}`]),
-    [options.theme],
-  );
 
   const placeholder = useMemo(() => `Search ${all.length} games`, [all.length]);
 
@@ -244,7 +342,7 @@ const Games = memo(() => {
         <div
           className={clsx(
             'relative flex items-center gap-2.5 rounded-[10px] px-3 w-[600px] h-11',
-            searchCls,
+            scrollCls,
           )}
         >
           <Search className="w-4 h-4 shrink-0" />
@@ -264,13 +362,49 @@ const Games = memo(() => {
         </div>
       )}
 
-      {!category && !showDl && dlCount > 0 && (
-        <div className="w-full flex justify-center pb-1">
+      {showCacheModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-[#1a252f] rounded-xl p-6 w-80">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Caching Games</h3>
+              <button onClick={() => setShowCacheModal(false)} className="hover:opacity-70">
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-sm text-gray-400 mb-3">{cacheProgress.category}</p>
+            <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+              <div
+                className="bg-blue-500 h-2 rounded-full transition-all"
+                style={{ width: `${(cacheProgress.current / cacheProgress.total) * 100}%` }}
+              />
+            </div>
+            <p className="text-xs text-center text-gray-400">
+              {cacheProgress.current} / {cacheProgress.total} games
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!category && !showDl && (
+        <div className="w-full flex justify-center gap-4 pb-1">
+          {dlCount > 0 && (
+            <button
+              onClick={handleViewDl}
+              className="cursor-pointer text-xs hover:opacity-80 transition-opacity whitespace-nowrap"
+            >
+              View Downloaded Games ({dlCount})
+            </button>
+          )}
           <button
-            onClick={handleViewDl}
-            className="cursor-pointer text-xs hover:opacity-80 transition-opacity whitespace-nowrap"
+            onClick={handleCacheAll}
+            disabled={Object.values(cachingGames).some(Boolean)}
+            className="cursor-pointer text-xs hover:opacity-80 transition-opacity whitespace-nowrap flex items-center gap-1 disabled:opacity-50"
           >
-            View Downloaded Games ({dlCount})
+            {Object.values(cachingGames).some(Boolean) ? (
+              <><Loader2 size={12} className="animate-spin" /> Caching All...</>
+            ) : (
+              <><Download size={12} /> Cache All Games</>
+            )}
           </button>
         </div>
       )}
@@ -326,10 +460,12 @@ const Games = memo(() => {
               games={games}
               onClick={navApp}
               onViewMore={handleViewMore}
+              onCache={handleCacheCategory}
               fallback={fallback}
               onImgError={handleImgError}
               theme={{ ...theme, current: options.theme || 'default' }}
               styles={styles}
+              cachingGames={cachingGames}
             />
           ))}
         </div>

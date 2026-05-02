@@ -6,10 +6,8 @@
 @font-face {
   font-family: 'SFProText';
   src:
-    url('https://cdn.jsdelivr.net/gh/nerocdn/assets-8bH2k/subset-SFProText-Semibold.woff2')
-      format('woff2'),
-    url('https://cdn.jsdelivr.net/gh/nerocdn/assets-8bH2k/subset-SFProText-Semibold.woff')
-      format('woff');
+    url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.8/files/inter-latin-600-normal.woff2')
+      format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;

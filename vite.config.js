@@ -20,7 +20,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 logging.set_level(logging.NONE);
 let bare;
 
-async function remoteApps(urls = ['https://ci.baylib.top/apps.json?t=' + Date.now()]) {
+const APPS_JSON_URL = process.env.APPS_JSON_URL || 'https://swafthub-apps.pages.dev/apps.json';
+async function remoteApps(urls = [APPS_JSON_URL + '?t=' + Date.now()]) {
   const list = Array.isArray(urls) ? urls : [urls];
   let lastErr;
 
@@ -201,12 +202,12 @@ export default defineConfig(({ command }) => {
     server: {
       proxy: {
         '/assets/img': {
-          target: 'https://dogeub-assets.pages.dev',
+          target: process.env.ASSETS_CDN || 'https://swafthub-assets.pages.dev',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/assets\/img/, '/img'),
         },
         '/assets-fb': {
-          target: 'https://dogeub-assets.pages.dev',
+          target: process.env.ASSETS_CDN || 'https://swafthub-assets.pages.dev',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/assets-fb/, '/img/server'),
         },
@@ -214,8 +215,6 @@ export default defineConfig(({ command }) => {
     },
     define: {
       __ENVIRONMENT__: JSON.stringify(environment),
-      POPUNDER_ENABLED: JSON.stringify(process.env.POPUNDER_ENABLED),
-      POPUNDER_URL: JSON.stringify(process.env.POPUNDER_URL),
     },
   };
 });

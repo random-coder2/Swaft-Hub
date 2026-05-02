@@ -1,15 +1,13 @@
 import { useOptions } from '../utils/optionsContext';
-import { Bookmark, HeartPlus, Megaphone } from 'lucide-react';
+import { Bookmark, HeartPlus } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import Disc from './Discord';
 import clsx from 'clsx';
 import BookmarksModal from './Bookmarks';
-import DisableAdsModal from './DisableAds';
 
 const Footer = memo(() => {
   const { options } = useOptions();
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
-  const [isDisableAdsOpen, setIsDisableAdsOpen] = useState(false);
   const handleDs = useCallback(() => {
     window.open('/ds', '_blank');
   }, []);
@@ -35,16 +33,6 @@ const Footer = memo(() => {
           </a>
         )}
         {options.donationBtn !== false && <span className="text-gray-500">•</span>}
-        <div
-          className={clsx(
-            'flex gap-1 items-center cursor-pointer',
-            'hover:-translate-y-0.5 duration-200',
-          )}
-          onClick={() => setIsDisableAdsOpen(true)}
-        >
-          {' '}
-          <Megaphone className="w-4" /> Disable Ads{' '}
-        </div>
       </div>{' '}
       <div className="flex gap-2 items-center">
         {' '}
@@ -82,7 +70,6 @@ const Footer = memo(() => {
         </div>{' '}
       </div>{' '}
       <BookmarksModal isOpen={isBookmarksOpen} onClose={() => setIsBookmarksOpen(false)} />{' '}
-      <DisableAdsModal isOpen={isDisableAdsOpen} onClose={() => setIsDisableAdsOpen(false)} />{' '}
     </div>
   );
 });
