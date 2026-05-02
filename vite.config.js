@@ -23,7 +23,6 @@ let bare;
 const APPS_JSON_URL = process.env.APPS_JSON_URL || 'https://swafthub-apps.pages.dev/apps.json';
 async function remoteApps(urls = [APPS_JSON_URL + '?t=' + Date.now()]) {
   const list = Array.isArray(urls) ? urls : [urls];
-  let lastErr;
 
   for (const u of list) {
     try {
@@ -35,11 +34,19 @@ async function remoteApps(urls = [APPS_JSON_URL + '?t=' + Date.now()]) {
 
       return JSON.stringify(await res.json());
     } catch (e) {
-      lastErr = e;
+      console.warn('Remote apps.json failed, using local:', e.message);
     }
   }
 
-  throw lastErr || new Error('apps.json unavailable');
+  // Fallback to local apps.json
+  try {
+    const localPath = resolve(__dirname, 'src/data/apps.json');
+    const fs = await import('fs');
+    const data = fs.readFileSync(localPath, 'utf8');
+    return JSON.stringify(JSON.parse(data));
+  } catch (e) {
+    throw new Error('apps.json unavailable - both remote and local failed');
+  }
 }
 
 Object.assign(wisp.options, {
