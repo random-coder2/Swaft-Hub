@@ -197,6 +197,20 @@ export const advancedConfig = ({ options, updateOption }) => ({
     },
   },
   2: {
+    name: 'Backend Server',
+    desc: 'Set the backend proxy server URL (for JSDelivr deployments).',
+    value: options.backendServer || '',
+    type: 'input',
+    action: (b) => {
+      updateOption({ backendServer: b || null });
+      // Also update wisp server if not set
+      if (b && !options.wServer) {
+        const wsUrl = b.replace('https:', 'wss:').replace('http:', 'ws:');
+        updateOption({ wServer: `${wsUrl}/wisp/` });
+      }
+    },
+  },
+  3: {
     name: 'Wisp Config',
     desc: 'Configure the websocket server location.',
     value: options.wServer
@@ -205,21 +219,21 @@ export const advancedConfig = ({ options, updateOption }) => ({
     type: 'input',
     action: (b) => updateOption({ wServer: b || null }),
   },
-  3: {
+  4: {
     name: 'Export Settings',
     desc: 'Download your current settings as a JSON file.',
     type: 'button',
     value: 'Export JSON',
     action: () => exportSettings(),
   },
-  4: {
+  5: {
     name: 'Import Settings',
     desc: 'Load settings from a JSON file and reload the site.',
     type: 'button',
     value: 'Import JSON',
     action: () => importSettings(),
   },
-  5: {
+  6: {
     name: 'Reset Instance',
     desc: 'Clear your site data if you are having issues.',
     type: 'button',

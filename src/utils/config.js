@@ -333,6 +333,12 @@ export const meta = [
   },
 ];
 
+// Proxy server endpoints - uses your backend
+export const PROXY_CONFIG = {
+  bare: `${BACKEND_URL}/seal/`,
+  wisp: `${BACKEND_URL}/wisp/`,
+};
+
 export const searchConfig = [
   {
     option: 'Google',
@@ -548,6 +554,9 @@ export const navScaleConfig = [
   { option: '120%', value: { navScale: 1.2 } },
   { option: '130%', value: { navScale: 1.3 } },
 ];
+
+// Backend server URL - change this to your server address
+export const BACKEND_URL = window.BACKEND_URL || 'https://scramjet.swaft.org';
 
 export const prConfig = [
   {

@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { BareMuxConnection } from 'bare-mux-fork';
 import { useOptions } from '/src/utils/optionsContext';
+import { BACKEND_URL } from '/src/utils/config';
 import { makecodec } from './of';
 
 export default function useReg() {
   const { options } = useOptions();
-  const defaultWs = `${location.protocol == 'http:' ? 'ws:' : 'wss:'}//${location.host}/wisp/`;
+  // Use configured backend URL or fallback to current host
+  const defaultWs = options.wServer || `${BACKEND_URL.replace('https:', 'wss:').replace('http:', 'ws:')}/wisp/`;
   const sws = [
     { path: new URL('/sw.js', location.origin).href, scope: new URL('/portal/k12/', location.origin).href },
     { path: new URL('/s_sw.js', location.origin).href, scope: new URL('/ham/', location.origin).href }
@@ -57,9 +59,13 @@ export default function useReg() {
 
       const libcurlPath = '/libcurl/index.mjs';
       const wisp = options.wServer || defaultWs;
+
+      // Also configure Bare server endpoint
+      const bareEndpoint = options.bareServer || `${BACKEND_URL}/seal/`;
       await connection.setTransport(libcurlPath, [
         {
           wisp: wisp,
+          bare: bareEndpoint,
         },
       ]);
     };
